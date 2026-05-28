@@ -1,0 +1,11 @@
+* text=auto
+
+# Shell scripts must stay LF
+*.sh text eol=lf
+
+# Optional: other Unix-y files that often break with CRLF
+Dockerfile text eol=lf
+*.Dockerfile text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+Makefile text eol=lf

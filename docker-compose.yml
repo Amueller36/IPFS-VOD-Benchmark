@@ -1,0 +1,272 @@
+version: "3.9"
+
+services:
+  seed:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    command: ["seed", "--file", "/videos/input.mp4", "--chunk-kb", "256", "--segment-kb", "1024", "--out", "/data/seed"]
+    volumes:
+      - ./videos:/videos:ro
+      - graphsync-data:/data
+    profiles: ["seed"]
+
+  gs-peer-fast-1:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    entrypoint: ["/usr/local/bin/gs-peer.sh"]
+    environment:
+      SHAPE_PROFILE: fast
+      IDENTITY_PATH: /keys/peer.key
+      STORE_DIR: /data
+      SEED_DIR: /data/seed
+    volumes:
+      - graphsync-data:/data:ro
+      - gs-peer-fast-1-keys:/keys
+    cap_add: ["NET_ADMIN"]
+    networks: [bench]
+
+  gs-peer-fast-2:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    entrypoint: ["/usr/local/bin/gs-peer.sh"]
+    environment:
+      SHAPE_PROFILE: fast
+      IDENTITY_PATH: /keys/peer.key
+      STORE_DIR: /data
+      SEED_DIR: /data/seed
+    volumes:
+      - graphsync-data:/data:ro
+      - gs-peer-fast-2-keys:/keys
+    cap_add: ["NET_ADMIN"]
+    networks: [bench]
+
+  gs-peer-slow-1:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    entrypoint: ["/usr/local/bin/gs-peer.sh"]
+    environment:
+      SHAPE_PROFILE: slow
+      IDENTITY_PATH: /keys/peer.key
+      STORE_DIR: /data
+      SEED_DIR: /data/seed
+    volumes:
+      - graphsync-data:/data:ro
+      - gs-peer-slow-1-keys:/keys
+    cap_add: ["NET_ADMIN"]
+    networks: [bench]
+
+  gs-peer-slow-2:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    entrypoint: ["/usr/local/bin/gs-peer.sh"]
+    environment:
+      SHAPE_PROFILE: slow
+      IDENTITY_PATH: /keys/peer.key
+      STORE_DIR: /data
+      SEED_DIR: /data/seed
+    volumes:
+      - graphsync-data:/data:ro
+      - gs-peer-slow-2-keys:/keys
+    cap_add: ["NET_ADMIN"]
+    networks: [bench]
+
+  gs-peer-slow-3:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    entrypoint: ["/usr/local/bin/gs-peer.sh"]
+    environment:
+      SHAPE_PROFILE: slow
+      IDENTITY_PATH: /keys/peer.key
+      STORE_DIR: /data
+      SEED_DIR: /data/seed
+    volumes:
+      - graphsync-data:/data:ro
+      - gs-peer-slow-3-keys:/keys
+    cap_add: ["NET_ADMIN"]
+    networks: [bench]
+
+  kubo-fast-1:
+    build:
+      context: .
+      dockerfile: docker/kubo.Dockerfile
+    entrypoint: ["/usr/local/bin/kubo-peer.sh"]
+    privileged: true
+    environment:
+      VIDEO_PATH: /videos/input.mp4
+      DATA_DIR: /data
+      IPFS_PATH: /ipfs
+      SHAPE_PROFILE: fast
+      ANNOUNCE_HOST: kubo-fast-1
+      KUBO_PEER_ADDRS: kubo-fast-2,kubo-slow-1,kubo-slow-2,kubo-slow-3
+      KUBO_PEER_INTERVAL: 10
+      BITSWAP_CHUNK_KB: ${BITSWAP_CHUNK_KB:-1024}
+    volumes:
+      - ./videos:/videos:ro
+      - kubo-fast-1-data:/ipfs
+      - kubo-shared:/data
+      - ./docker/kubo-peer.sh:/usr/local/bin/kubo-peer.sh:ro
+      - ./docker/shape_fast.sh:/usr/local/bin/shape_fast.sh:ro
+      - ./docker/shape_slow.sh:/usr/local/bin/shape_slow.sh:ro
+    cap_add: ["NET_ADMIN"]
+    networks: [bench]
+
+  kubo-fast-2:
+    build:
+      context: .
+      dockerfile: docker/kubo.Dockerfile
+    entrypoint: ["/usr/local/bin/kubo-peer.sh"]
+    privileged: true
+    environment:
+      VIDEO_PATH: /videos/input.mp4
+      DATA_DIR: /data
+      IPFS_PATH: /ipfs
+      SHAPE_PROFILE: fast
+      ANNOUNCE_HOST: kubo-fast-2
+      KUBO_PEER_ADDRS: kubo-fast-1,kubo-slow-1,kubo-slow-2,kubo-slow-3
+      KUBO_PEER_INTERVAL: 10
+      BITSWAP_CHUNK_KB: ${BITSWAP_CHUNK_KB:-1024}
+    volumes:
+      - ./videos:/videos:ro
+      - kubo-fast-2-data:/ipfs
+      - kubo-shared:/data
+      - ./docker/kubo-peer.sh:/usr/local/bin/kubo-peer.sh:ro
+      - ./docker/shape_fast.sh:/usr/local/bin/shape_fast.sh:ro
+      - ./docker/shape_slow.sh:/usr/local/bin/shape_slow.sh:ro
+    cap_add: ["NET_ADMIN"]
+    networks: [bench]
+
+  kubo-slow-1:
+    build:
+      context: .
+      dockerfile: docker/kubo.Dockerfile
+    entrypoint: ["/usr/local/bin/kubo-peer.sh"]
+    privileged: true
+    environment:
+      VIDEO_PATH: /videos/input.mp4
+      DATA_DIR: /data
+      IPFS_PATH: /ipfs
+      SHAPE_PROFILE: slow
+      ANNOUNCE_HOST: kubo-slow-1
+      KUBO_PEER_ADDRS: kubo-fast-1,kubo-fast-2,kubo-slow-2,kubo-slow-3
+      KUBO_PEER_INTERVAL: 10
+      BITSWAP_CHUNK_KB: ${BITSWAP_CHUNK_KB:-1024}
+    volumes:
+      - ./videos:/videos:ro
+      - kubo-slow-1-data:/ipfs
+      - kubo-shared:/data
+      - ./docker/kubo-peer.sh:/usr/local/bin/kubo-peer.sh:ro
+      - ./docker/shape_fast.sh:/usr/local/bin/shape_fast.sh:ro
+      - ./docker/shape_slow.sh:/usr/local/bin/shape_slow.sh:ro
+    cap_add: ["NET_ADMIN"]
+    networks: [bench]
+
+  kubo-slow-2:
+    build:
+      context: .
+      dockerfile: docker/kubo.Dockerfile
+    entrypoint: ["/usr/local/bin/kubo-peer.sh"]
+    privileged: true
+    environment:
+      VIDEO_PATH: /videos/input.mp4
+      DATA_DIR: /data
+      IPFS_PATH: /ipfs
+      SHAPE_PROFILE: slow
+      ANNOUNCE_HOST: kubo-slow-2
+      KUBO_PEER_ADDRS: kubo-fast-1,kubo-fast-2,kubo-slow-1,kubo-slow-3
+      KUBO_PEER_INTERVAL: 10
+      BITSWAP_CHUNK_KB: ${BITSWAP_CHUNK_KB:-1024}
+    volumes:
+      - ./videos:/videos:ro
+      - kubo-slow-2-data:/ipfs
+      - kubo-shared:/data
+      - ./docker/kubo-peer.sh:/usr/local/bin/kubo-peer.sh:ro
+      - ./docker/shape_fast.sh:/usr/local/bin/shape_fast.sh:ro
+      - ./docker/shape_slow.sh:/usr/local/bin/shape_slow.sh:ro
+    cap_add: ["NET_ADMIN"]
+    networks: [bench]
+
+  kubo-slow-3:
+    build:
+      context: .
+      dockerfile: docker/kubo.Dockerfile
+    entrypoint: ["/usr/local/bin/kubo-peer.sh"]
+    privileged: true
+    environment:
+      VIDEO_PATH: /videos/input.mp4
+      DATA_DIR: /data
+      IPFS_PATH: /ipfs
+      SHAPE_PROFILE: slow
+      ANNOUNCE_HOST: kubo-slow-3
+      KUBO_PEER_ADDRS: kubo-fast-1,kubo-fast-2,kubo-slow-1,kubo-slow-2
+      KUBO_PEER_INTERVAL: 10
+      BITSWAP_CHUNK_KB: ${BITSWAP_CHUNK_KB:-1024}
+    volumes:
+      - ./videos:/videos:ro
+      - kubo-slow-3-data:/ipfs
+      - kubo-shared:/data
+      - ./docker/kubo-peer.sh:/usr/local/bin/kubo-peer.sh:ro
+      - ./docker/shape_fast.sh:/usr/local/bin/shape_fast.sh:ro
+      - ./docker/shape_slow.sh:/usr/local/bin/shape_slow.sh:ro
+    cap_add: ["NET_ADMIN"]
+    networks: [bench]
+
+  benchmark-ui:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    command: ["benchmark-ui"]
+    environment:
+      GS_CLIENT_BIN: /usr/local/bin/gs-client
+      BITSWAP_CLIENT_BIN: /usr/local/bin/boxo-bitswap-client
+      SEED_BIN: /usr/local/bin/seed
+      UI_ADDR: ${UI_ADDR:-:8080}
+      UI_PUBLIC_URL: ${UI_PUBLIC_URL:-http://localhost:8080}
+      PLOTS_API_URL: http://plots:8090
+      BENCHMARK_UI_DIST_DIR: /app/ui-dist
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./docker/peers.json:/opt/peers.json
+      - ./videos:/videos:ro
+      - kubo-shared:/data
+      - graphsync-data:/graphsync-data
+      - runs-data:/data/runs
+    ports:
+      - "127.0.0.1:54444:8080"
+    networks: [bench]
+
+  plots:
+    build:
+      context: .
+      dockerfile: docker/plots.Dockerfile
+    environment:
+      RUNS_DIR: /data/runs
+      PLOT_SERVER_ADDR: 0.0.0.0
+      PLOT_SERVER_PORT: 8090
+    volumes:
+      - runs-data:/data/runs:ro
+    networks: [bench]
+
+
+networks:
+  bench:
+
+volumes:
+  graphsync-data:
+  kubo-shared:
+  kubo-fast-1-data:
+  kubo-fast-2-data:
+  kubo-slow-1-data:
+  kubo-slow-2-data:
+  kubo-slow-3-data:
+  runs-data:
+  gs-peer-fast-1-keys:
+  gs-peer-fast-2-keys:
+  gs-peer-slow-1-keys:
+  gs-peer-slow-2-keys:
+  gs-peer-slow-3-keys:

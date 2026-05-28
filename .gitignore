@@ -1,0 +1,23 @@
+# Runtime and benchmark artifacts
+videos/*.mp4
+analysis/figures/
+data/
+docker/peers.json
+# Python
+__pycache__/
+*.pyc
+
+# Go
+bin/
+
+# Frontend
+ui/node_modules/
+ui/dist/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+*.pdf
+
+plots/*
+runs/*

@@ -1,0 +1,8 @@
+{
+  "peers": [
+    {
+      "addr": "/ip4/152.53.248.27/udp/4002/quic-v1/p2p/12D3KooWNroYS3mhn91pM8TQqgUZHhnKpLjFz9Q5DLRo4dJzaWVg",
+      "label": "fast"
+    }
+  ]
+}
