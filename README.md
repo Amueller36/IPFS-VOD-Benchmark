@@ -1,6 +1,20 @@
 # IPFS Streaming Bench
 
 Dieses Repository enthält eine Benchmark Umgebung für IPFS-basiertes Video-Streaming. Der Benchmark vergleicht einen eigenen GraphSync-Client mit adaptiver Peer-Auswahl gegen eine Boxo/Bitswap-Baseline. Ziel ist, ein Videostream Abruf unter dezentralen Bedingungen reproduzierbar zu simulieren. Dabei werden QoE und andere Metriken erhoben um so verschiedene Ansätze miteinander vergleichen zu können. 
+## Table of Contents
+- [IPFS Streaming Bench](#ipfs-streaming-bench)
+  - [Table of Contents](#table-of-contents)
+  - [Voraussetzungen](#voraussetzungen)
+  - [Setup](#setup)
+  - [Einen einzelnen Benchmark ausführen](#einen-einzelnen-benchmark-ausführen)
+  - [UI-Parameter](#ui-parameter)
+    - [Seeding](#seeding)
+    - [Szenario und Run](#szenario-und-run)
+  - [Ergebnisse und Analyse](#ergebnisse-und-analyse)
+  - [Nützliche Befehle](#nützliche-befehle)
+  - [Troubleshooting](#troubleshooting)
+  - [Screenshot der Web-UI](#screenshot-der-web-ui)
+
 
 Die Umgebung besteht aus:
 
@@ -77,6 +91,38 @@ Der normale Weg für einen einzelnen Run führt über die Web-UI.
 8. Die Queue starten.
 9. Nach Abschluss die Ergebnisse in der UI herunterladen.
 
+
+## UI-Parameter
+
+### Seeding
+
+| Parameter | Default | Beschreibung und Sonderfälle |
+| --- | --- | --- |
+| `Seed Segment KB (GraphSync)` | `1024` | Legt die Segmentgröße im POSL-Layout fest. Auswählbar sind `256`, `512`, `1024`, `2048`, `4096` und `8192` KB. |
+| `Seed Chunk KB (GraphSync)` | `256` | Legt die Chunk-Größe innerhalb eines GraphSync-Segments fest. Erlaubt sind `256`, `512` und `1024` KB, aber nur wenn die Segmentgröße dadurch ohne Rest teilbar ist. |
+| `Seed Block KB (Bitswap)` | `1024` | Legt die Chunk-Größe für den Kubo Bitswap-Seed fest. erlaubt sind `256`, `512` und `1024` KB, Werte über `1024` werden auf `1024` begrenzt. |
+
+`Layout CID` und `Bitswap CID` sind reine Anzeigefelder für die zuletzt gefundenen oder erzeugten Root CIDs.
+
+### Szenario und Run
+
+| Parameter | Default | Beschreibung und Sonderfälle |
+| --- | --- | --- |
+| `Szenario Preset` | `Benutzerdefiniert` | Wählt eine vorbereitete Konfiguration; `GraphSync (adaptiver Scheduler)` setzt GraphSync-Parameter und sperrt den Modus, `Boxo Bitswap Baseline` schaltet auf Bitswap und sperrt den Modus. |
+| `Modus` | `GraphSync` | Wählt den Client-Typ; `Bitswap` nutzt die Boxo/Bitswap-Baseline über Kubo-Provider. |
+| `Netzwerk Preset` | `Benutzerdefiniert` | Befüllt die Peer-Netzwerkkonfiguration mit vorbereiteten Profilen wie heterogen, homogen, Bandbreitenstress oder Packet Loss aus der Masterarbeit |
+| `Prefetch Segmente` | `-1` | Begrenzt die Anzahl der Segmente die der Graphsync Scheduler maximal prefetchen soll. `-1` bedeutet alle verbleibenden Segmente. |
+| `Prefetch Worker` | `5` | Bestimmt die Zahl paralleler GraphSync Anfragen. 5 Bedeutet es werden maximal 5 Segmente gleichzeitig angefragt. `0` bedeutet die Anzahl verbundener GraphSync-Peers. |
+| `Race Fanout` | `-1` | Bestimmt, wie viele GraphSync-Peers pro Race parallel angefragt werden; `-1` bedeutet alle verbundenen GraphSync-Peers. |
+| `Discovery Fanout` | `2` | Begrenzt parallele nicht dringende Durchsatz Discovery Anfragen. Werte `<=0` deaktivieren die Discovery. |
+| `Playback ms` | `40` | Legt die Abspielzeit pro Segment fest. Nach `Seed Info aktualisieren` wird der Wert automatisch aus Segmentgröße, Videogröße und Videodauer berechnet, solange er nicht manuell geändert wurde. |
+| `Playback Geschwindigkeit (x)` | `1` | Skaliert die simulierte Abspielgeschwindigkeit. Die UI sendet einen entsprechend angepassten effektiven `playbackMs`-Wert an den Run. |
+| `Urgent Window` | `10` | Legt die Anzahl der Segmente fest, die als dringend markiert werden. Beeinflusst die adaptive Peer-Auswahl. |
+| `EMA alpha` | `0.2` | Glättungsfaktor für die GraphSync-Durchsatzschätzung. Höhere Werte reagieren stärker auf neue Messungen. |
+| `Runs wiederholen` | `1` | Wiederholt diesen Run mehrfach. Minimum ist `1`. |
+| `Pause zwischen Runs ms` | `0` | Wartet zwischen Wiederholungen oder Queue-Einträgen. Minimum ist `0`. |
+
+
 ## Ergebnisse und Analyse
 
 Die Web-UI speichert Run-Daten als JSON und bietet Downloads für Runs, Plots und Timeline-Exporte an. Die persistenten Run-Daten liegen im Docker-Volume `runs-data`.
@@ -130,3 +176,6 @@ docker compose down -v
 - Die UI meldet, dass `videos/input.mp4` fehlt: Datei exakt unter diesem Pfad ablegen und den Stack bei Bedarf neu starten.
 - GraphSync-Peers finden den Seed nicht: `POSL Layout seeden` erneut ausführen oder die Container mit `docker compose up -d --force-recreate` neu erstellen.
 - Ein Run verwendet alte Daten: Run- und Seed-Volumes mit `docker compose down -v` entfernen und danach neu bauen/starten.
+
+## Screenshot der Web-UI
+![Screenshot der Web-UI](IPFS_Benchmarker_Webui.png)
